@@ -5,9 +5,9 @@ const { $api } = useNuxtApp();
 
 const users = ref([]);
 
-onMounted(async () => {
-  users.value = await $api.index("/example", { count: 9 });
-});
+// onMounted(async () => {
+//   users.value = await $api.index("/example", { count: 9 });
+// });
 </script>
 
 <template>
