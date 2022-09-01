@@ -29,7 +29,8 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('redirect/{provider}', 'redirect')->name('provider.redirect');
     Route::get('callback/{provider}', 'callback')->name('provider.callback');
     Route::get('onetap/{credential}', 'onetap')->name('onetap.support');
-    Route::post('attempt', 'attempt')->name('auth.attempt');
+    Route::post('attemptRegister', 'attemptRegister')->name('auth.attemptRegister');
+    Route::post('attemptLogin', 'attemptLogin')->name('auth.attemptLogin');
     Route::post('login', 'login')->name('auth.login');
     Route::get('logout', 'logout')->middleware('auth:api')->name('auth.logout');
     Route::get('me', 'me')->middleware('auth:api')->name('auth.session');

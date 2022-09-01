@@ -1,34 +1,27 @@
-import { defineNuxtPlugin, useNuxtApp, useRuntimeConfig } from '#app'
-import Api from '~/lib/api'
+import { defineNuxtPlugin, useRuntimeConfig } from "#app";
+import Api from "~/lib/api";
 
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig()
-  const { $toast } = useNuxtApp()
+  const config = useRuntimeConfig();
   return {
     provide: {
       api: new Api({
-          fetchOptions: {
-            baseURL: config.public.apiURL,
-          },
-          apiURL: config.public.apiURL,
-          webURL: config.public.webURL,
-          redirect: {
-            logout: '/',
-            login: '/home',
-          },
-          /*
-          echoConfig: {
-            pusherAppKey: config.public.pusherAppKey,
-            pusheAppCluster: config.public.pusherAppCluster,
-          },
-          */
-        }, $toast),
+        fetchOptions: {
+          baseURL: config.public.apiURL,
+        },
+        apiURL: config.public.apiURL,
+        webURL: config.public.webURL,
+        redirect: {
+          logout: "/",
+          login: "/login",
+        },
+      }),
     },
-  }
-})
+  };
+});
 
-declare module '#app' {
+declare module "#app" {
   interface NuxtApp {
-    $api: Api
+    $api: Api;
   }
 }

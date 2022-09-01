@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use acidjazz\Humble\Models\Attempt;
 use acidjazz\Humble\Models\Session;
 use acidjazz\Humble\Traits\Humble;
 use Database\Factories\UserFactory;

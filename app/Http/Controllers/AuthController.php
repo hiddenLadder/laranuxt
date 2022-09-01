@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Provider;
 use App\Models\User;
-use App\Notifications\LoginAttempt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
@@ -26,26 +27,6 @@ class AuthController extends Controller
 
         return Socialite::driver($provider)->stateless()->redirect();
     }
-
-    /*
-    public function onetap(string $credential)
-    {
-        $client = new Client(['client_id' => config('services.google.client_id')]);
-        $oaUser = (object) $client->verifyIdToken($credential);
-        if (!isset($oaUser->sub)) {
-            return $this->error('auth.provider-invalid');
-        }
-        $user = $this->oaHandle($oaUser, 'google');
-
-        // @var User $user
-        auth()->login($user, 'google');
-
-        return $this->render([
-            'token' => auth()->token(),
-            'user' => auth()->user(),
-        ])->cookie('token', auth()->token(), 0, '');
-    }
-    */
 
     /**
      * Callback hit by the provider to verify user
@@ -131,50 +112,57 @@ class AuthController extends Controller
      * @param  array  $payload
      * @return User
      */
-    private function createUser(string $provider, string $name, string $email, string $avatar, array $payload): User
+    private function createUser(string $provider, string $name, string $email, string $password, array $payload): User
     {
         $user = User::create([
             'name' => $name,
             'email' => $email,
-            'avatar' => $avatar,
+            'password' => bcrypt($password)
         ]);
         Provider::create([
             'user_id' => $user->id,
             'name' => $provider,
-            'avatar' => $avatar,
             'payload' => $payload,
         ]);
 
         return $user;
     }
 
-    /**
-     * Login attempt via e-mail
-     *
-     * @param  Request  $request
-     * @return Response|JsonResponse
-     */
-    public function attempt(Request $request): Response|JsonResponse
-    {
+    public function attemptLogin(Request $request) {
         $this
             ->option('email', 'required|email')
             ->option('action', 'nullable|string')
+            ->option('password', 'required')
+            ->verify();
+        if ($user = User::where('email', $request->email)->first()) {
+            if (Hash::check($request->password, $user->password)) {
+                $attempt = auth()->attempt($user->id, json_decode($request->action));
+                return $this->render($attempt->token);
+            }
+        }
+        $this->addError('email', 'Данные не соответствуют нашим записям.');
+        $this->abort();
+    }
+
+    public function attemptRegister(Request $request)
+    {
+        $this
+            ->option('name', 'required')
+            ->option('email', 'required|email|unique:users,email')
+            ->option('action', 'nullable|string')
+            ->option('password', 'required|confirmed')
             ->verify();
 
-        if (! $user = User::where('email', $request->email)->first()) {
-            $user = $this->createUser(
+        $user = $this->createUser(
                 'email',
-                explode('@', $request->email)[0],
+                $request->name,
                 $request->email,
-                'https://www.gravatar.com/avatar/' . md5($request->email),
+                $request->password,
                 []
             );
-        }
 
-        $attempt = auth()->attempt($user, json_decode($request->action));
-        $user->notify(new LoginAttempt($attempt));
-
-        return $this->success('auth.attempt');
+        $attempt = auth()->attempt($user->id, json_decode($request->action));
+        return $this->render($attempt->token);
     }
 
     /**

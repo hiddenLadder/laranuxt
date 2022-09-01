@@ -18,6 +18,7 @@ class CreateUsersTable extends Migration
             $table->id();
             $table->string('email')->unique();
             $table->string('name')->nullable();
+            $table->string('password');
             $table->string('avatar', 1000)->nullable();
             $table->string('stripe')->nullable();
             $table->boolean('is_sub')->default(false);
